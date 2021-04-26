@@ -6,7 +6,7 @@ from build_net import *
 plt.ion()
 
 model = load_image_subnet()
-files_list = get_img_flist_ordered(TEST_DATA_DIR)
+files_list = get_img_jsonlist_ordered(TEST_DATA_DIR)
 
 x_bar = [x for x in range(128)]
 
