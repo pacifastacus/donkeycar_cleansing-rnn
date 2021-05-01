@@ -1,7 +1,8 @@
 import keras 
 from keras.models import load_model, save_model
-from keras.models import Model
+from keras.models import Model,Sequential
 from keras.layers import Input, Dense, Dropout, BatchNormalization, Flatten
+from keras.layers.wrappers import TimeDistributed as TD
 from matplotlib.image import imread
 from matplotlib import pyplot as plt
 import numpy as np
@@ -10,13 +11,16 @@ import glob
 
 TEST_DATA_DIR = data_dir = "/media/users/DATA/Projektek/classify-donkey-dataset/test_data/img"
 
-def load_image_subnet(file='rnn_top.h5'):
+def load_image_subnet(file='rnn_cnn_top.h5'):
 	model = load_model(file,compile=False)
 	model.trainable = False
 	return model
 	
-def make_control_signal_subnet():
-	pass
+def make_control_signal_subnet(seq_len=9):
+	control_seq_shape = (9,2)
+	x = Seqential()
+	x.add(TD(Input(shape=control_seq_shape)))
+	return x
 	
 def get_img_flist_ordered(data_dir):
 	im_list = glob.glob(data_dir+'/*.jpg')
