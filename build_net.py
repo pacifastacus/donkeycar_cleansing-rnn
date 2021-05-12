@@ -3,6 +3,7 @@ from keras.models import load_model, save_model
 from keras.models import Model,Sequential
 from keras.layers import Input, Dense, Dropout, BatchNormalization, Flatten, Concatenate, LSTM
 from keras.layers.wrappers import TimeDistributed as TD
+from keras.preprocessing.sequence import TimeseriesGenerator
 from matplotlib.image import imread
 from matplotlib import pyplot as plt
 import numpy as np
@@ -118,32 +119,32 @@ def make_plot(model):
 	from keras.utils import plot_model
 	plot_model(model,model.name+".png",show_shapes=True,show_dtype=True,show_layer_names=True,expand_nested=True,dpi=300)
 
-class DataGen(keras.utils.Sequence):
-	def __init__(self, df,X_col,y_col,batch_size):
-		self.batch_size = batch_size
-		self.df = df
-		self.X_col = X_col
-		self.y_col = y_col
-		pass
+class DataSeqGen(TimeseriesGenerator):
 
-	def __get_data(self,batches):
+	def __data_from_json(self,filename):
+		path, _ = os.path.split(filename)
+		with open(filename) as f:
+			df = json.load(f)
+		im = get_img(path,df["cam/image_array"])
+		ctrl = np.array([df["user/throttle"],df["user/angle"]])
+		return im, ctrl
 
-		return X,y
+	def __load_data_from_arr_of_jsons(self,json_arr):
+		probe_im, _ = self.__data_from_json(json_arr[0,0])
+		H,W,C = probe_im.shape
+		img_seq = np.zeros((self.batch_size, self.length,H,W,C),dtype=np.uint8)
+		ctrl_seq = np.zeros((self.batch_size,self.length,2))
+		for i in range(self.batch_size):
+			for j in range(self.length):
+				im, ctrl = self.__data_from_json(json_arr[i,j])
+				img_seq[i,j] = im
+				ctrl_seq[i,j] = ctrl
+		return [img_seq, ctrl_seq]
+
+
 
 	def __getitem__(self, item):
-		'''
-		Assemble and load the next mini-batch
-		:param item: the item-th minibatch from the whole dataset
-		:return: a mini-batch
-		'''
-
-		batches = self.df[item*self.batch_size:(item+1)*self.batch_size]
-		X, y = self.__get_data(batches)
-		return  X, y
-
-	def on_epoch_end(self):
-		pass
-
-	def __len__(self):
-		pass
-
+		x, y = super().__getitem__(item)
+		data_dir, _ = os.path.split(x[0,0])
+		x = self.__load_data_from_arr_of_jsons(x)
+		return x, y

@@ -22,7 +22,8 @@ x_bar = [x for x in range(128)]
 # 	plt.pause(0.0625)
 # 	plt.clf()
 
-data_gen = data_generator(data_dir,files_list)
+y = np.random.choice([0,1],size=len(files_list))
+data_gen = DataSeqGen(files_list,y,length=9,batch_size=16,shuffle=True)
 model = build_model()
 model.compile(optimizer="rmsprop",loss="binary_crossentropy")
 model.fit_generator(data_gen)
