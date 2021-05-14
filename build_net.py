@@ -89,9 +89,25 @@ def data_generator(data_dir, seq_len=9):
 		yield X,table["y"][i]
 
 
+def load_data(data_dir):
+	X_list = []
+	y_list = []
+	path, basename = os.path.split(data_dir)
+	with open(os.path.join(path,basename+"_filter.csv")) as f:
+		f.readline()	#Skip the header
+		for line in f:
+			json_name, y = line.strip().split(",")
+			with open(os.path.join(path,json_name)) as fjson:
+				df = json.load(fjson)
+				img = get_img(data_dir,df["cam/image_array"])
+				ctrl = np.array([df["user/throttle"],df["user/angle"]])
+				X_list.append([img,ctrl])
+			y_list.append(y)
+	return X_list, y_list
+
+
+
 def get_img(data_dir,im_name):
-#	with open(im) as f:
-#		im_name = json.load(f)["cam/image_array"]
 	return imread(os.path.join(data_dir,im_name))
 
 
@@ -118,6 +134,7 @@ def build_model():
 def make_plot(model):
 	from keras.utils import plot_model
 	plot_model(model,model.name+".png",show_shapes=True,show_dtype=True,show_layer_names=True,expand_nested=True,dpi=300)
+
 
 class DataSeqGen(TimeseriesGenerator):
 
